@@ -1,16 +1,17 @@
-const { logInfo, logWarn } = require("./utils/logger");
+const { logInfo, logWarn, logError } = require("./utils/logger");
 
-const waitingUsers = new Map(); 
-const activeRooms = new Map(); 
+const waitingUsers = new Map();
+const activeRooms = new Map();
 
 function initMatchmaking(io) {
   io.on("connection", (socket) => {
     logInfo(`User connected: ${socket.id}`);
-
     socket.on("joinQueue", () => {
-      waitingUsers.set(socket.id, socket);
-      logInfo(`User ${socket.id} it was added to the queue.`);
-      tryMatch(io);
+      if (!waitingUsers.has(socket.id)) {
+        waitingUsers.set(socket.id, socket);
+        logInfo(`User ${socket.id} added to queue.`);
+        tryMatch(io);
+      }
     });
 
     socket.on("reconnectRoom", (roomId) => {
@@ -19,13 +20,13 @@ function initMatchmaking(io) {
         if (!room.users.includes(socket.id)) {
           room.users.push(socket.id);
           socket.join(roomId);
-          logInfo(`User ${socket.id} reconnected to ${roomId}`);
+          logInfo(`User ${socket.id} reconnected to room ${roomId}`);
         }
       }
     });
 
     socket.on("disconnect", () => {
-      logWarn(`Usuario desconectado: ${socket.id}`);
+      logWarn(`User disconnected: ${socket.id}`);
       waitingUsers.delete(socket.id);
 
       for (const [roomId, room] of activeRooms.entries()) {
@@ -36,6 +37,10 @@ function initMatchmaking(io) {
           break;
         }
       }
+    });
+
+    socket.on("error", (err) => {
+      logError(`Socket error (${socket.id}):`, err);
     });
   });
 }

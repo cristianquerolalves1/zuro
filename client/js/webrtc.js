@@ -1,19 +1,20 @@
 import { iceServers } from "./config.js";
 import { setStatus, toggleButtons, showAlert } from "./ui.js";
 
-let localStream;
-let peerConnection;
-let roomId;
-let socket;
+let localStream = null;
+let peerConnection = null;
+let roomId = null;
+let socket = null;
 
 export async function initLocalStream() {
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    document.getElementById("localVideo").srcObject = localStream;
+    const localVideo = document.getElementById("localVideo");
+    if (localVideo) localVideo.srcObject = localStream;
     setStatus("Camera and microphone ready.");
   } catch (err) {
     showAlert("Could not access camera/microphone.", "error");
-    console.error(err);
+    console.error("initLocalStream error:", err);
   }
 }
 
@@ -21,12 +22,17 @@ export function startWebRTC(socketInstance, assignedRoomId) {
   socket = socketInstance;
   roomId = assignedRoomId;
 
-  peerConnection = new RTCPeerConnection({ iceServers });
+  if (!localStream) {
+    showAlert("Local stream not initialized", "warn");
+    return;
+  }
+
+  peerConnection = new RTCPeerConnection(iceServers);
 
   localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
   peerConnection.ontrack = (event) => {
-    document.getElementById("remoteVideo").srcObject = event.streams[0];
+    const remoteVideo = document.getElementById("remoteVideo");
+    if (remoteVideo) remoteVideo.srcObject = event.streams[0];
     setStatus("Connected with partner");
     toggleButtons(true);
   };
@@ -49,12 +55,13 @@ export function startWebRTC(socketInstance, assignedRoomId) {
 
 export async function createOffer() {
   try {
+    if (!peerConnection) throw new Error("PeerConnection not initialized");
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
     socket.emit("signal", { roomId, data: offer });
   } catch (err) {
     showAlert("Error creating offer", "error");
-    console.error(err);
+    console.error("createOffer error:", err);
   }
 }
 
@@ -69,18 +76,23 @@ export async function handleSignal(from, data) {
         await peerConnection.setLocalDescription(answer);
         socket.emit("signal", { roomId, data: answer });
         break;
+
       case "answer":
         await peerConnection.setRemoteDescription(new RTCSessionDescription(data));
         break;
+
       case "ice":
-        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        if (data.candidate) {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
         break;
+
       default:
         console.warn("Unknown signal type:", data.type);
     }
   } catch (err) {
     showAlert("Error handling signal", "error");
-    console.error(err);
+    console.error("handleSignal error:", err);
   }
 }
 
@@ -89,10 +101,12 @@ export function disconnect() {
     peerConnection.close();
     peerConnection = null;
   }
+
   if (localStream) {
     localStream.getTracks().forEach(track => track.stop());
     localStream = null;
   }
+
   toggleButtons(false);
   setStatus("Offline");
 }

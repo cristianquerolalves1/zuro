@@ -8,23 +8,35 @@ const disconnectBtn = document.getElementById("disconnectBtn");
 let currentRoomId = null;
 
 async function initApp() {
-  await initLocalStream();
-  toggleButtons(false);
+  try {
+    await initLocalStream();
+    toggleButtons(false);
+    attachEventHandlers();
+  } catch (error) {
+    showAlert("Failed to initialize local media", "error");
+    console.error("initApp error:", error);
+  }
+}
 
-  startBtn.onclick = () => {
+function attachEventHandlers() {
+  startBtn.addEventListener("click", async () => {
     setStatus("Searching for partner...");
-    socket.emit("joinQueue");
     toggleButtons(true);
-  };
+    socket.emit("joinQueue");
+  });
 
-  disconnectBtn.onclick = () => {
+  disconnectBtn.addEventListener("click", () => {
     if (currentRoomId) {
       socket.emit("disconnectRoom", currentRoomId);
     }
     disconnect();
-  };
+    currentRoomId = null;
+    toggleButtons(false);
+    setStatus("Disconnected");
+  });
 }
 
+// Eventos de socket
 socket.on("matched", ({ roomId, partnerId }) => {
   currentRoomId = roomId;
   setStatus(`Connected with ${partnerId}`);
@@ -33,7 +45,11 @@ socket.on("matched", ({ roomId, partnerId }) => {
 });
 
 socket.on("signal", async ({ from, data }) => {
-  await handleSignal(from, data);
+  try {
+    await handleSignal(from, data);
+  } catch (err) {
+    console.error("Signal handling error:", err);
+  }
 });
 
 socket.on("partnerDisconnected", () => {
@@ -47,13 +63,14 @@ socket.on("partnerDisconnected", () => {
 
 socket.on("connect_error", (err) => {
   showAlert("Connection error with server", "error");
-  console.error(err);
+  console.error("Socket connection error:", err);
 });
 
 socket.on("disconnect", () => {
   showAlert("Server connection lost", "warn");
   disconnect();
   currentRoomId = null;
+  toggleButtons(false);
 });
 
-window.onload = initApp;
+window.addEventListener("load", initApp);

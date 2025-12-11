@@ -1,30 +1,36 @@
-    // ANSI colors
-    const colors = {
-    Reset: "\x1b[0m",
-    Blue: "\x1b[34m",
-    Yellow: "\x1b[33m",
-    Red: "\x1b[31m"
-    };
+// ANSI colors
+const colors = {
+  Reset: "\x1b[0m",
+  Blue: "\x1b[34m",
+  Yellow: "\x1b[33m",
+  Red: "\x1b[31m"
+};
 
-    /**
-     * @param  {...any} args
-     */
-    function logInfo(...args) {
-    console.log(`${colors.Blue}[INFO ${new Date().toISOString()}]${colors.Reset}`, ...args);
-    }
+const useColors = process.stdout.isTTY;
 
-    /**
-     * @param  {...any} args
-     */
-    function logWarn(...args) {
-    console.warn(`${colors.Yellow}[WARN ${new Date().toISOString()}]${colors.Reset}`, ...args);
-    }
+/**
+ * @param {string} color 
+ * @param {string} label 
+ * @param  {...any} args 
+ */
+function formatLog(color, label, ...args) {
+  const timestamp = new Date().toISOString();
+  if (useColors) {
+    return [`${color}[${label} ${timestamp}]${colors.Reset}`, ...args];
+  }
+  return [`[${label} ${timestamp}]`, ...args];
+}
 
-    /**
-     * @param  {...any} args
-     */
-    function logError(...args) {
-    console.error(`${colors.Red}[ERROR ${new Date().toISOString()}]${colors.Reset}`, ...args);
-    }
+function logInfo(...args) {
+  console.log(...formatLog(colors.Blue, "INFO", ...args));
+}
 
-    module.exports = { logInfo, logWarn, logError };
+function logWarn(...args) {
+  console.warn(...formatLog(colors.Yellow, "WARN", ...args));
+}
+
+function logError(...args) {
+  console.error(...formatLog(colors.Red, "ERROR", ...args));
+}
+
+module.exports = { logInfo, logWarn, logError };
