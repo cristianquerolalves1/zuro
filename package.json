@@ -3,16 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "start": "node server/index.js",
-    "dev": "nodemon server/index.js"
-  },
-  "keywords": [],
+ "scripts": {
+  "start": "node server/index.js",
+  "dev": "nodemon server/index.js",
+  "build": "echo \"No build step required for this project\""
+},
+  "keywords": ["omegle", "zuro", "video", "webrtc", "socket.io", "minimalist"],
   "author": "Cristian Querol Alves",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
-    "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-session": "^1.18.2",
