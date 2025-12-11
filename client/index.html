@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zuro</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Zuro</h1>
+    <p>Connect randomly and start video chatting.</p>
+  </header>
+
+  <main>
+    <div id="videos">
+      <video id="localVideo" autoplay muted playsinline></video>
+      <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+
+    <div id="controls">
+      <button id="startBtn">Connect</button>
+      <button id="disconnectBtn" disabled>Disconnect</button>
+    </div>
+
+    <div id="status"></div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Zuro</p>
+  </footer>
+
+<div id="social-buttons">
+  <a href="https://github.com/cristianquerolalves1" target="_blank" class="btn btn-github">
+    <ion-icon name="logo-github" class="icon"></ion-icon>
+  </a>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="js/config.js"></script>
+<script type="module" src="js/webrtc.js"></script>
+<script type="module" src="js/ui.js"></script>
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
